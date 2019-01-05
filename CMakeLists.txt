@@ -75,7 +75,7 @@ set(GLOBAL_HEADERS "")
 add_subdirectory(include)
 
 # Include libraries
-#add_subdirectory(libs/...)
+add_subdirectory(libs/lspc)
 
 MACRO(HEADER_DIRECTORIES return_list)
     FILE(GLOB_RECURSE new_list *.h)

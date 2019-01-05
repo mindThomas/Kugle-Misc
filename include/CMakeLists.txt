@@ -11,7 +11,7 @@ MACRO(CMAKE_DIRECTORIES return_list)
 ENDMACRO()
 
 CMAKE_DIRECTORIES(SUBDIRS)
-message(STATUS "Adding global header (*.hpp) directories:")
+message(STATUS "Adding global header (*.h, *.hpp) include directories:")
 
 FOREACH(subdir ${SUBDIRS})
   message(STATUS "   " ${subdir})
