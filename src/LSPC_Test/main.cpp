@@ -40,6 +40,12 @@ void handl(const std::vector<uint8_t>& payload)
     return;
 }
 
+void debugHandler(const std::vector<uint8_t>& payload)
+{
+    std::string message(payload.data(), payload.data() + payload.size());
+    std::cout << message;
+}
+
 bool shouldExit = false;
 
 void exitHandler(int signum) {
@@ -66,7 +72,8 @@ int main(int argc, char** argv ) {
             std::this_thread::sleep_for (std::chrono::seconds(1));
         }
     }
-    mySocket.registerCallback(1, handl);
+    mySocket.registerCallback(0x01, handl);
+    mySocket.registerCallback(0xFF, debugHandler);
 
     std::vector<uint8_t> payload;
     payload.push_back(0x11);
