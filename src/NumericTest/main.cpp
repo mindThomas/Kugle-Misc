@@ -59,32 +59,32 @@ int main(int argc, char** argv ) {
 
     if (!std::string(argv[1]).compare("-i"))
     {
-	if (argc != 3) {
-		printf("Error: Needs a numeric input!\n");
-		exit(-1);
-	}
-	int number;
-	std::istringstream ss1(argv[2]);
-	if (!(ss1 >> number)) {
-		printf("Error: Number could not be parsed!\n");
-		exit(-1);
-	}
-	std::cout << "Parsed number: " << number << std::endl;
+        if (argc != 3) {
+            printf("Error: Needs a numeric input!\n");
+            exit(-1);
+        }
+        int number;
+        std::istringstream ss1(argv[2]);
+        if (!(ss1 >> number)) {
+            printf("Error: Number could not be parsed!\n");
+            exit(-1);
+        }
+        std::cout << "Parsed number: " << number << std::endl;
     }
 
     if (!std::string(argv[1]).compare("-f"))
     {
-	if (argc != 3) {
-		printf("Error: Needs a numeric input!\n");
-		exit(-1);
-	}
-	double number;
-	std::istringstream ss1(argv[2]);
-	if (!(ss1 >> number)) {
-		printf("Error: Number could not be parsed!\n");
-		exit(-1);
-	}
-	std::cout << "Parsed number: " << number << std::endl;
+        if (argc != 3) {
+            printf("Error: Needs a numeric input!\n");
+            exit(-1);
+        }
+        double number;
+        std::istringstream ss1(argv[2]);
+        if (!(ss1 >> number)) {
+            printf("Error: Number could not be parsed!\n");
+            exit(-1);
+        }
+        std::cout << "Parsed number: " << number << std::endl;
     }
 
     return 0;
