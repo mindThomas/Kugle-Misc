@@ -44,7 +44,9 @@ namespace lspc {
 		if (error == boost::system::errc::operation_canceled) {
 			return;
 		} else if (error) {
-			throw std::runtime_error("processSerial: " + error.message());
+			controller_port.close();
+			return;
+			//throw std::runtime_error("processSerial: " + error.message());
 		}
 
 		uint8_t incoming_byte = read_buffer[0];

@@ -51,6 +51,7 @@ include(cmake_common/eigen/eigen.cmake)
 include(cmake_common/yaml/yaml.cmake)
 include(cmake_common/openmp.cmake) # for code optimization
 include(cmake_common/easy_profiler/easy_profiler.cmake) # profiling tool
+include(cmake_common/acado/acado.cmake) # for MPC code generation
 
 find_package(Boost REQUIRED COMPONENTS system signals python thread program_options regex QUIET)
 mark_as_advanced(BOOST_THREAD_LIBRARY)
@@ -58,6 +59,7 @@ mark_as_advanced(BOOST_THREAD_LIBRARY)
 find_package(OpenCV 3.3.1 REQUIRED core imgproc highgui) # contrib
 
 include_directories( ${OpenCV_INCLUDE_DIRS} )
+include_directories(... ${ACADO_INCLUDE_DIRS})
 include_directories(... ${Boost_INCLUDE_DIRS})
 link_directories(... ${Boost_LIBRARY_DIRS})
 
@@ -76,6 +78,7 @@ add_subdirectory(include)
 
 # Include libraries
 add_subdirectory(libs/lspc)
+add_subdirectory(libs/mpc)
 
 MACRO(HEADER_DIRECTORIES return_list)
     FILE(GLOB_RECURSE new_list *.h)

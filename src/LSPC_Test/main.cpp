@@ -24,6 +24,10 @@
 #include <cstdint>
 #include <iostream>
 #include <iomanip>
+#include <boost/thread/thread.hpp>
+
+void StartIMUcalibration(lspc::Socket& socket);
+void TestThread(lspc::Socket& socket);
 
 void handl(const std::vector<uint8_t>& payload)
 {
@@ -53,38 +57,68 @@ void exitHandler(int signum) {
 }
 
 int main(int argc, char** argv ) {
-    lspc::Socket mySocket;
-
     signal(SIGINT, exitHandler);
 
-    int open_tries = 5;
-    while (! mySocket.isOpen())
-    {
-        try {
-            mySocket.open("/dev/kugle");
-        }
-        catch (boost::system::system_error& e)
-        {
-            if (0 == --open_tries)
-            {
-                std::terminate();
-            }
-            std::this_thread::sleep_for (std::chrono::seconds(1));
-        }
-    }
-    mySocket.registerCallback(0x01, handl);
-    mySocket.registerCallback(0xFF, debugHandler);
-
-    std::vector<uint8_t> payload;
-    payload.push_back(0x11);
-    payload.push_back(0x22);
-    payload.push_back(0x33);
-    payload.push_back(0x44);
-    payload.push_back(0x55);
-    payload.push_back(0x66);
-
     while (!shouldExit) {
-        mySocket.send(1, payload);
-        std::this_thread::sleep_for (std::chrono::milliseconds(20));
+        { // create scope wherein the mySocket object is created - this enforces destruction if connection is lost
+            lspc::Socket mySocket;
+            while (!mySocket.isOpen() && !shouldExit) {
+                try {
+                    std::cout << "Trying to connect to Kugle" << std::endl;
+                    mySocket.open("/dev/kugle");
+                }
+                catch (boost::system::system_error &e) {
+                    std::this_thread::sleep_for(std::chrono::seconds(1));
+                }
+            }
+            if (shouldExit) break;
+
+            std::cout << "Connected to Kugle" << std::endl;
+            boost::thread testThread = boost::thread(boost::bind(&TestThread, boost::ref(mySocket)));
+
+            mySocket.registerCallback(0x01, handl);
+            mySocket.registerCallback(0xFF, debugHandler);
+
+            while (mySocket.isOpen() && !shouldExit) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(20));
+            }
+            if (testThread.joinable())
+                testThread.join();
+            if (shouldExit)
+                break;
+        }
+
+        std::cout << "Connection lost to Kugle" << std::endl;
     }
+
+    //std::cout << "Exiting..." << std::endl;
+}
+
+void TestThread(lspc::Socket& socket)
+{
+    /*for (int i = 30; i > 0; i--) {
+        if ((i % 10) == 0)
+            std::cout << "Counting down to IMU calibration: " << ceil((float)i/10) << std::endl;
+        boost::this_thread::sleep_for(boost::chrono::milliseconds(100));
+        if (!(socket.isOpen() && !shouldExit)) break;
+    }
+
+    if (socket.isOpen() && !shouldExit)
+        StartIMUcalibration(socket);*/
+
+    while (socket.isOpen() && !shouldExit) {
+        boost::this_thread::sleep_for(boost::chrono::milliseconds(100));
+        //boost::this_thread::sleep(boost::posix_time::milliseconds(100));
+    }
+}
+
+void StartIMUcalibration(lspc::Socket& socket)
+{
+    std::vector<uint8_t> payload;
+    payload.push_back(0x12);
+    payload.push_back(0x34);
+    payload.push_back(0x56);
+    payload.push_back(0x78);
+
+    socket.send(0xE0, payload);
 }
