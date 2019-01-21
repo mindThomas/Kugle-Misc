@@ -50,11 +50,15 @@
 
 void tic();
 void toc();
+boost::math::quaternion<double> Quaternion_eul2quat_zyx(const float yaw, const float pitch, const float roll);
+void Quaternion_quat2eul_zyx(boost::math::quaternion<double> q, float yaw_pitch_roll[3]);
+
 
 int main(int argc, char** argv ) {    
     std::string argv_str(realpath(argv[0], 0));
     std::string base = argv_str.substr(0, argv_str.find_last_of("/"));
 
+#if 0
     MPC::Trajectory trajectory = MPC::Trajectory::GenerateTestTrajectory();
     trajectory.plot(false, false, -6, -3, 6, 3);
 
@@ -173,13 +177,50 @@ int main(int argc, char** argv ) {
     poly.print();
 
     return 0;
-
+#endif
 
     MPC::MPC mpc;
-    std::cout << "Created MPC object" << std::endl;
+    MPC::Trajectory trajectory = MPC::Trajectory::GenerateTestTrajectory();
 
-    for (int i = 0; i < 10; i++)
+    double RobotYaw = deg2rad(90);
+    auto RobotQuaternion = Quaternion_eul2quat_zyx(RobotYaw, -deg2rad(5), deg2rad(5));
+    mpc.setTrajectory(trajectory, Eigen::Vector2d(4.5, -0.8), Eigen::Vector2d(0,0), RobotQuaternion);
+    mpc.setCurrentState(Eigen::Vector2d(4.5, -0.8), Eigen::Vector2d(0,0), RobotQuaternion);
+
+    for (int i = 0; i < 1000; i++) {
+        cv::Mat imgTrajectory = cv::Mat( 500, 1500, CV_8UC3, cv::Scalar( 255, 255, 255 ) );
+        trajectory.plot(imgTrajectory, cv::Scalar(0, 0, 255), false, false, -6, -2, 6, 2);
+        mpc.PlotRobot(imgTrajectory, cv::Scalar(255, 0, 0), false, -6, -2, 6, 2);
+        cv::imshow("Trajectory", imgTrajectory);
+
+        cv::Mat imgPredicted = cv::Mat( 500, 500, CV_8UC3, cv::Scalar( 255, 255, 255 ) );
+        mpc.PlotPredictedTrajectory(imgPredicted);
+        cv::imshow("Predicted", imgPredicted);
+
+        cv::Mat imgWindowTrajectory = cv::Mat( 500, 500, CV_8UC3, cv::Scalar( 255, 255, 255 ) );
+        mpc.getCurrentTrajectory().plot(imgWindowTrajectory, cv::Scalar(0, 255, 0), true, false);
+        cv::imshow("Window", imgWindowTrajectory);
+
+        cv::Mat imgWindowPath = cv::Mat( 500, 500, CV_8UC3, cv::Scalar( 255, 255, 255 ) );
+        mpc.getCurrentPath().plot(imgWindowPath, cv::Scalar(0, 255, 0), true);
+        mpc.getCurrentPath().PlotPoint(mpc.getClosestPointOnPath(), imgWindowPath, cv::Scalar(0, 0, 255), true);
+        cv::imshow("Path", imgWindowPath);
+
         mpc.Step();
+
+        MPC::MPC::state_t state = mpc.getHorizonState();
+        std::cout << "Estimated states:" << std::endl;
+        std::cout << "position = " << std::endl << state.position << std::endl;
+        std::cout << "velocity = " << std::endl << state.velocity << std::endl;
+        std::cout << "quaternion = " << std::endl << state.quaternion << std::endl;
+
+        if ((i % 10) == 0)
+            mpc.setTrajectory(trajectory, state.position, state.velocity, state.quaternion);
+
+        mpc.setCurrentState(state.position, state.velocity, state.quaternion);
+
+        cv::waitKey(0);
+    }
 
     return 0;
 }
@@ -198,4 +239,40 @@ void toc()
     double timediff = ((double)tend.tv_sec + 1.0e-9*tend.tv_nsec) -
                       ((double)tstart.tv_sec + 1.0e-9*tstart.tv_nsec);
     std::cout << "It took "<< timediff << " second(s)"<< std::endl;
+}
+
+boost::math::quaternion<double> Quaternion_eul2quat_zyx(const float yaw, const float pitch, const float roll)
+{
+    const float cx = cosf(roll/2);
+    const float cy = cosf(pitch/2);
+    const float cz = cosf(yaw/2);
+    const float sx = sinf(roll/2);
+    const float sy = sinf(pitch/2);
+    const float sz = sinf(yaw/2);
+
+    double q[4];
+    q[0] = cz*cy*cx+sz*sy*sx;
+    q[1] = cz*cy*sx-sz*sy*cx;
+    q[2] = cz*sy*cx+sz*cy*sx;
+    q[3] = sz*cy*cx-cz*sy*sx;
+
+    return boost::math::quaternion<double>(q[0], q[1], q[2], q[3]);
+}
+
+void Quaternion_quat2eul_zyx(boost::math::quaternion<double> q, float yaw_pitch_roll[3])
+{
+    // Normalize quaternion
+    q /= norm(q);
+
+    float qw = q.R_component_1();
+    float qx = q.R_component_2();
+    float qy = q.R_component_3();
+    float qz = q.R_component_4();
+
+    float aSinInput = -2*(qx*qz-qw*qy);
+    aSinInput = fmax(fmin(aSinInput, 1.f), -1.f);
+
+    yaw_pitch_roll[0] = atan2( 2*(qx*qy+qw*qz), qw*qw + qx*qx - qy*qy - qz*qz ); // yaw
+    yaw_pitch_roll[1] = asin( aSinInput ); // pitch
+    yaw_pitch_roll[2] = atan2( 2*(qy*qz+qw*qx), qw*qw - qx*qx - qy*qy + qz*qz ); // roll
 }

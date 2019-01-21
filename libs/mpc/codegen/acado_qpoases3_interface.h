@@ -43,7 +43,7 @@
 /** Maximum number of working set recalculations. */
 #define QPOASES_NWSRMAX    1950
 /** Print level for qpOASES. */
-#define QPOASES_PRINTLEVEL PL_NONE
+#define QPOASES_PRINTLEVEL PL_HIGH
 /** The value of EPS */
 #define QPOASES_EPS        2.221e-16
 /** Internally used floating point type */

@@ -1,5 +1,5 @@
 # Configure build as release (for maximum optimization) but still add debug information (-g flag)
-set(CMAKE_BUILD_TYPE "Release")
+set(CMAKE_BUILD_TYPE "Debug")
 
 message(STATUS "Adding library: mpc [${CMAKE_BUILD_TYPE}]")
 
@@ -39,8 +39,11 @@ set(include_directories "${CMAKE_CURRENT_SOURCE_DIR}"
 			"${OpenCV_INCLUDE_DIRS}"
 )
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -finline-functions -D__CODE_GENERATION__")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -finline-functions")
+#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -finline-functions -D__CODE_GENERATION__")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -finline-functions")
+
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -finline-functions -D__CODE_GENERATION__")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -finline-functions")
 
 set(GLOBAL_HEADERS ${GLOBAL_HEADERS} ${binary_headers} PARENT_SCOPE)
 
