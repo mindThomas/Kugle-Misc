@@ -451,9 +451,9 @@ namespace MPC
 
     }
 
-    Path::Path(Trajectory& trajectory, unsigned int approximationOrder, bool EnforceBeginEndConstraint, bool EnforceBeginEndAngleConstraint) : computed_dsquared_(false)
+    Path::Path(Trajectory& trajectory, unsigned int approximationOrder, bool StopAtEnd, bool EnforceBeginEndConstraint, bool EnforceBeginEndAngleConstraint) : computed_dsquared_(false)
     {
-        FitTrajectory(trajectory, approximationOrder, EnforceBeginEndConstraint, EnforceBeginEndAngleConstraint);
+        FitTrajectory(trajectory, approximationOrder, StopAtEnd, EnforceBeginEndConstraint, EnforceBeginEndAngleConstraint);
     }
 
     Path::~Path()
@@ -705,7 +705,7 @@ namespace MPC
         }
     }
 
-    void Path::FitTrajectory(Trajectory& trajectory, unsigned int approximationOrder, bool EnforceBeginEndConstraint, bool EnforceBeginEndAngleConstraint)
+    void Path::FitTrajectory(Trajectory& trajectory, unsigned int approximationOrder, bool StopAtEnd, bool EnforceBeginEndConstraint, bool EnforceBeginEndAngleConstraint)
     {
         // approximationOrder is for x(t) and y(t) fitting
         unsigned order_t2s = approximationOrder + 1; // order_t2s is for t(s) fitting
@@ -756,11 +756,21 @@ namespace MPC
             yEven.push_back(yt.evaluate(t));
         }
 
+        /* Hack to make the fitted trajectory keep the same position after reaching the distance value */
+        if (StopAtEnd) {
+            for (int i = 1; i < 100; i++) {
+                double s = sTotal + i * spacing;
+                sEven.push_back(s);
+                xEven.push_back(xEven.back());
+                yEven.push_back(yEven.back());
+            }
+        }
+
         /* Use the s to x-y pairs to create final approximation: x(s) and y(s) */
         // Fit two new polynomials on the new generated points, x_0,...,x_n  and y_0,...,y_n  using the evenly spaced distance parameters, s_0,...,s_n, as the parameter
         poly_x_.FitPoints(order_f2s, sEven, xEven, EnforceBeginEndConstraint, EnforceBeginEndAngleConstraint);
         poly_y_.FitPoints(order_f2s, sEven, yEven, EnforceBeginEndConstraint, EnforceBeginEndAngleConstraint);
-        s_end_ = sTotal;
+        s_end_ = sEven.back(); // sTotal
     }
 
     void Path::print()

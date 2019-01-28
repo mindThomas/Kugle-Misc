@@ -43,6 +43,8 @@
 #include <chrono>
 #include <ctime>
 
+#include <random>
+
 /* For plotting/visualization */
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/core.hpp>
@@ -53,10 +55,17 @@ void toc();
 boost::math::quaternion<double> Quaternion_eul2quat_zyx(const float yaw, const float pitch, const float roll);
 void Quaternion_quat2eul_zyx(boost::math::quaternion<double> q, float yaw_pitch_roll[3]);
 
+bool shouldExit = false;
+
+void exitHandler(int signum) {
+    shouldExit = true;
+}
 
 int main(int argc, char** argv ) {    
     std::string argv_str(realpath(argv[0], 0));
     std::string base = argv_str.substr(0, argv_str.find_last_of("/"));
+
+    signal(SIGINT, exitHandler);
 
 #if 0
     MPC::Trajectory trajectory = MPC::Trajectory::GenerateTestTrajectory();
@@ -178,48 +187,108 @@ int main(int argc, char** argv ) {
 
     return 0;
 #endif
-
+    
     MPC::MPC mpc;
     MPC::Trajectory trajectory = MPC::Trajectory::GenerateTestTrajectory();
 
+    // Random obstacle generation
+    std::default_random_engine generator;
+    std::uniform_real_distribution<double> x_distribution(-6, 6);
+    std::uniform_real_distribution<double> y_distribution(-2, 2);
+    std::uniform_real_distribution<double> radius_distribution(0.2, 1);
+    std::vector<MPC::Obstacle> obstacles;
+    obstacles.push_back(MPC::Obstacle(4, 1.9, 0.2));
+    obstacles.push_back(MPC::Obstacle(5.4, 1.7, 0.5));
+    obstacles.push_back(MPC::Obstacle(3.1, 2.2, 0.3));
+    obstacles.push_back(MPC::Obstacle(x_distribution(generator), y_distribution(generator), radius_distribution(generator)));
+    obstacles.push_back(MPC::Obstacle(x_distribution(generator), y_distribution(generator), radius_distribution(generator)));
+    obstacles.push_back(MPC::Obstacle(x_distribution(generator), y_distribution(generator), radius_distribution(generator)));
+    obstacles.push_back(MPC::Obstacle(x_distribution(generator), y_distribution(generator), radius_distribution(generator)));
+    obstacles.push_back(MPC::Obstacle(x_distribution(generator), y_distribution(generator), radius_distribution(generator)));
+    obstacles.push_back(MPC::Obstacle(x_distribution(generator), y_distribution(generator), radius_distribution(generator)));
+
+
+    Eigen::Vector2d RobotPos(4.5, -0.8);
     double RobotYaw = deg2rad(90);
-    auto RobotQuaternion = Quaternion_eul2quat_zyx(RobotYaw, -deg2rad(5), deg2rad(5));
-    mpc.setTrajectory(trajectory, Eigen::Vector2d(4.5, -0.8), Eigen::Vector2d(0,0), RobotQuaternion);
-    mpc.setCurrentState(Eigen::Vector2d(4.5, -0.8), Eigen::Vector2d(0,0), RobotQuaternion);
+    auto RobotQuaternion = Quaternion_eul2quat_zyx(RobotYaw, 0, 0);
+    mpc.setTrajectory(trajectory, RobotPos, Eigen::Vector2d(0.01,0), RobotQuaternion);
+    mpc.setCurrentState(RobotPos, Eigen::Vector2d(0.01,0), RobotQuaternion);
+    mpc.setObstacles(obstacles);
 
-    for (int i = 0; i < 1000; i++) {
-        cv::Mat imgTrajectory = cv::Mat( 500, 1500, CV_8UC3, cv::Scalar( 255, 255, 255 ) );
-        trajectory.plot(imgTrajectory, cv::Scalar(0, 0, 255), false, false, -6, -2, 6, 2);
-        mpc.PlotRobot(imgTrajectory, cv::Scalar(255, 0, 0), false, -6, -2, 6, 2);
+    MPC::MPC::state_t state;
+    state = mpc.getHorizonState();
+
+    //for (int i = 0; i < 10000; i++) {
+    int i = 0;
+    while (!shouldExit) {
+        i++;
+
+        if ((i % 500) == 0) {
+            obstacles.clear();
+            obstacles.push_back(MPC::Obstacle(4, 1.9, 0.2));
+            obstacles.push_back(MPC::Obstacle(5.4, 1.7, 0.5));
+            obstacles.push_back(MPC::Obstacle(3.1, 2.2, 0.3));
+            obstacles.push_back(MPC::Obstacle(x_distribution(generator), y_distribution(generator), radius_distribution(generator)));
+            obstacles.push_back(MPC::Obstacle(x_distribution(generator), y_distribution(generator), radius_distribution(generator)));
+            obstacles.push_back(MPC::Obstacle(x_distribution(generator), y_distribution(generator), radius_distribution(generator)));
+            obstacles.push_back(MPC::Obstacle(x_distribution(generator), y_distribution(generator), radius_distribution(generator)));
+            obstacles.push_back(MPC::Obstacle(x_distribution(generator), y_distribution(generator), radius_distribution(generator)));
+            obstacles.push_back(MPC::Obstacle(x_distribution(generator), y_distribution(generator), radius_distribution(generator)));
+        }
+
+        if ((i % 10) == 0) {
+            mpc.setTrajectory(trajectory, state.position, state.velocity, state.quaternion);
+            mpc.setObstacles(obstacles);
+        }
+
+        mpc.setCurrentState(state.position, state.velocity, state.quaternion);
+
+        cv::Mat imgTrajectory = cv::Mat( 500, 1333, CV_8UC3, cv::Scalar( 255, 255, 255 ) );
+        trajectory.plot(imgTrajectory, cv::Scalar(0, 0, 255), false, false, -8, -3, 8, 3);
+        mpc.PlotRobot(imgTrajectory, cv::Scalar(255, 0, 0), false, -8, -3, 8, 3);
+        mpc.PlotObstacles(imgTrajectory, cv::Scalar(255, 0, 0), false, -8, -3, 8, 3);
         cv::imshow("Trajectory", imgTrajectory);
-
-        cv::Mat imgPredicted = cv::Mat( 500, 500, CV_8UC3, cv::Scalar( 255, 255, 255 ) );
-        mpc.PlotPredictedTrajectory(imgPredicted);
-        cv::imshow("Predicted", imgPredicted);
 
         cv::Mat imgWindowTrajectory = cv::Mat( 500, 500, CV_8UC3, cv::Scalar( 255, 255, 255 ) );
         mpc.getCurrentTrajectory().plot(imgWindowTrajectory, cv::Scalar(0, 255, 0), true, false);
+        mpc.PlotRobotInWindow(imgWindowTrajectory, cv::Scalar(255, 0, 0), true, -4, -4, 4, 4);
+        mpc.PlotObstaclesInWindow(imgWindowTrajectory, cv::Scalar(255, 0, 0), true, -4, -4, 4, 4);
         cv::imshow("Window", imgWindowTrajectory);
 
         cv::Mat imgWindowPath = cv::Mat( 500, 500, CV_8UC3, cv::Scalar( 255, 255, 255 ) );
         mpc.getCurrentPath().plot(imgWindowPath, cv::Scalar(0, 255, 0), true);
         mpc.getCurrentPath().PlotPoint(mpc.getClosestPointOnPath(), imgWindowPath, cv::Scalar(0, 0, 255), true);
+        mpc.PlotRobotInWindow(imgWindowPath, cv::Scalar(255, 0, 0), true, -4, -4, 4, 4);
+        mpc.PlotObstaclesInWindow(imgWindowPath, cv::Scalar(255, 0, 0), true, -4, -4, 4, 4);
         cv::imshow("Path", imgWindowPath);
 
         mpc.Step();
 
-        MPC::MPC::state_t state = mpc.getHorizonState();
-        std::cout << "Estimated states:" << std::endl;
+        Eigen::Vector2d angularVelocityReference(0.0, 0.0);
+        if (mpc.getStatus() != MPC::MPC::SUCCESS) {
+            std::cout << "MPC Solver failed" << std::endl;
+        }
+
+        state = mpc.getHorizonState();
+        std::cout << "Predicted states:" << std::endl;
+        std::cout << "path distance = " << state.pathDistance << std::endl;
         std::cout << "position = " << std::endl << state.position << std::endl;
         std::cout << "velocity = " << std::endl << state.velocity << std::endl;
         std::cout << "quaternion = " << std::endl << state.quaternion << std::endl;
+        std::cout << std::endl;
 
-        if ((i % 10) == 0)
-            mpc.setTrajectory(trajectory, state.position, state.velocity, state.quaternion);
+        angularVelocityReference = mpc.getInertialAngularVelocity();
+        std::cout << "Control output (angular velocity):" << std::endl;
+        std::cout << "   x = " << angularVelocityReference[0] << std::endl;
+        std::cout << "   y = " << angularVelocityReference[1] << std::endl;
 
-        mpc.setCurrentState(state.position, state.velocity, state.quaternion);
+        cv::Mat imgPredicted = cv::Mat( 500, 500, CV_8UC3, cv::Scalar( 255, 255, 255 ) );
+        mpc.PlotPredictedTrajectory(imgPredicted);
+        mpc.PlotObstaclesInWindow(imgPredicted, cv::Scalar(255, 0, 0), true, -4, -4, 4, 4);
+        mpc.PlotRobotInWindow(imgPredicted, cv::Scalar(255, 0, 0), true, -4, -4, 4, 4);
+        cv::imshow("Predicted", imgPredicted);
 
-        cv::waitKey(0);
+        cv::waitKey(1);
     }
 
     return 0;
