@@ -137,6 +137,7 @@ class MPC
         double getWindowAngularVelocityY(void);
         double getWindowAngularVelocityZ(void);
         Eigen::Vector2d getInertialAngularVelocity(void);
+        std::vector<std::pair<double,double>> getInertialAngularVelocityHorizon(void);
 
 		void setCurrentState(const Eigen::Vector2d& position, const Eigen::Vector2d& velocity, const boost::math::quaternion<double>& q);
         void setControlLimits(double maxAngularVelocity, double maxAngle);
@@ -145,13 +146,14 @@ class MPC
         void setTrajectory(Trajectory& trajectory, const Eigen::Vector2d& position, const Eigen::Vector2d& velocity, const boost::math::quaternion<double>& q);
         void ExtractWindowTrajectory(Trajectory& trajectory, Trajectory& extractedWindowTrajectory, const Eigen::Vector2d& position, const Eigen::Vector2d& velocity, const boost::math::quaternion<double>& q, double ExtractionDistance = 0, bool DoWindowFilteringBeforeExtractionDistance = false, orientation_selection_t OrientationSelection = INERTIAL_FRAME);
 
-        void PlotPredictedTrajectory(cv::Mat& image);
+        void PlotPredictedTrajectory(cv::Mat& image, double x_min, double y_min, double x_max, double y_max);
         void PlotRobot(cv::Mat& image, cv::Scalar color, bool drawXup, double x_min, double y_min, double x_max, double y_max);
         void PlotRobotInWindow(cv::Mat& image, cv::Scalar color, bool drawXup, double x_min, double y_min, double x_max, double y_max);
         void PlotObstacles(cv::Mat& image, cv::Scalar color, bool drawXup, double x_min, double y_min, double x_max, double y_max);
         void PlotObstaclesInWindow(cv::Mat& image, cv::Scalar color, bool drawXup, double x_min, double y_min, double x_max, double y_max);
         Trajectory getPredictedTrajectory(void);
         state_t getHorizonState(unsigned int horizonIndex = 1);
+        double getHorizonPathLength() const;
 
         Trajectory getCurrentTrajectory(void);
         Path getCurrentPath(void);
@@ -160,7 +162,8 @@ class MPC
 		double extractHeading(const boost::math::quaternion<double>& q);
 
 		double getSampleTime() const;
-        double getCurrentPathDistance() const;
+		double getSolveTime() const;
+        double getCurrentPathPosition() const;
         status_t getStatus() const;
 
     private:
@@ -202,6 +205,7 @@ class MPC
 		double SolverKKT_;
 		double SolverCostValue_;
 		int SolverIterations_;
+		double SolveTime_;
     };
 	
 }

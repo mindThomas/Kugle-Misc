@@ -354,6 +354,11 @@ namespace MPC
         return points_.at(index);
     }
 
+    TrajectoryPoint Trajectory::back()
+    {
+        return points_.back();
+    }
+
     void Trajectory::plot(cv::Mat& image, cv::Scalar color, bool drawXup, bool plotText, double x_min, double y_min, double x_max, double y_max)
     {
         double xres = image.cols;

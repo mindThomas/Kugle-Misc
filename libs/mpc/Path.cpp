@@ -64,7 +64,7 @@ namespace MPC
     /* Coefficients are stored such that c[0] is the coefficient for the lowest order element, such that:
      * y = c[n]*x^n + c[n-1]*x^(n-1) + ... c[2]*x^2 + c[1]*x + c[0]
      */
-    Polynomial::Polynomial(std::vector<double>& coeffs)
+    Polynomial::Polynomial(std::vector<double> coeffs)
     {
         coeffs_ = coeffs;
     }
@@ -715,6 +715,13 @@ namespace MPC
         std::vector<double> xValues = trajectory.GetX();
         std::vector<double> yValues = trajectory.GetY();
 
+        if (tVec.size() <= order_t2s) { // we do not have sufficient points for fitting - therefore just do a path that corresponds to holding a static position (end point)
+            s_end_ = 99;
+            poly_x_ = Polynomial({trajectory.back().point[0], 1000});
+            poly_y_ = Polynomial({trajectory.back().point[1], 1000});
+            return;
+        }
+
         /* Fit window points to two polynomials, x(t) and y(t), using parameters t starting with t0=0 and spaced with the distance between each point (chordal parameterization) */
         Polynomial xt, yt;
         xt.FitPoints(approximationOrder, tVec, xValues, EnforceBeginEndConstraint, EnforceBeginEndAngleConstraint);
@@ -757,14 +764,14 @@ namespace MPC
         }
 
         /* Hack to make the fitted trajectory keep the same position after reaching the distance value */
-        if (StopAtEnd) {
+        /*if (StopAtEnd) {
             for (int i = 1; i < 100; i++) {
                 double s = sTotal + i * spacing;
                 sEven.push_back(s);
-                xEven.push_back(xEven.back());
+                xEven.push_back(xEven.back() + spacing/1000);
                 yEven.push_back(yEven.back());
             }
-        }
+        }*/
 
         /* Use the s to x-y pairs to create final approximation: x(s) and y(s) */
         // Fit two new polynomials on the new generated points, x_0,...,x_n  and y_0,...,y_n  using the evenly spaced distance parameters, s_0,...,s_n, as the parameter

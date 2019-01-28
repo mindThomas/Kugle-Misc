@@ -39,9 +39,9 @@ namespace MPC {
 
     ACADO_t& MPC::ACADO = *((ACADO_t *)&acadoVariables);
 
-    const double MPC::WPathFollow = 10.0;
+    const double MPC::WPathFollow = 100.0;
     const double MPC::WVelocity = 2.0;
-    const double MPC::WSmoothness = 100;
+    const double MPC::WSmoothness = 10.0;
 
     // Horizon weight matrix (cost)
     const double MPC::Wdiag[ACADO_NY] = {MPC::WPathFollow, MPC::WPathFollow,  0.1,0.1,  0.1,0.1,  999.0,MPC::WVelocity,  MPC::WSmoothness,MPC::WSmoothness,  99999.0,99999999.0}; // { x_err;y_err; q2;q3;  omega_ref_x;omega_ref_y;  velocity_matching; velocity_error;   domega_ref_x;domega_ref_y;   velocity_slack_variable;angle_slack_variable;proximity_slack_variable }
@@ -121,7 +121,12 @@ namespace MPC {
 
     void MPC::setTrajectory(Trajectory& trajectory, const Eigen::Vector2d& position, const Eigen::Vector2d& velocity, const boost::math::quaternion<double>& q)
     {
-        ExtractWindowTrajectory(trajectory, currentTrajectory_, position, velocity, q, 1.3*HorizonLength*ACADO_TS*desiredVelocity_, false, WindowOrientationSelection_); // change the last parameter/flag to:  0=window in inertial frame,  1=window in heading frame,  2=window in velocity direction frame
+        double PreviousHorizonLength = getHorizonPathLength();
+        double ExtractionLength = 1.3*PreviousHorizonLength; // 1.3*HorizonLength*ACADO_TS*desiredVelocity_
+        if (ExtractionLength < 2.0)
+            ExtractionLength = 2.0;
+
+        ExtractWindowTrajectory(trajectory, currentTrajectory_, position, velocity, q, ExtractionLength, false, WindowOrientationSelection_); // change the last parameter/flag to:  0=window in inertial frame,  1=window in heading frame,  2=window in velocity direction frame
         //currentTrajectory_.print(); currentTrajectory_.plot(true); cv::waitKey(0);
 
         bool StopAtEnd = currentTrajectory_.includesGoal();
@@ -246,6 +251,16 @@ namespace MPC {
             ACADO.x[i].y = ACADO.x[i].y - y_reset;
         }
         // This results in ACADO.x[0].s = 0 and the path value predictions are then increasing from there
+
+        if ((ACADO.x[ACADO_N].s + closestPositionOnCurrentPathToOrigin_) > windowPathLength_) {
+            // Current MPC horizon initialization is running outside of new path. Reset to evenly space the s-values along path
+            double s_value = 0;
+            double s_spacing = (windowPathLength_ - closestPositionOnCurrentPathToOrigin_) / (ACADO_N-1);
+            for (unsigned int i = 1; i < (ACADO_N+1); i++) {
+                ACADO.x[i].s = s_value;
+                s_value += s_spacing;
+            }
+        }
     }
 
     void MPC::setXYreferencePosition(double x, double y)
@@ -253,13 +268,17 @@ namespace MPC {
         // OBS. Sending discrete position references to the path following controller turns it into a "trajectory tracking" controller
         Path emptyPath;
         windowPath_ = emptyPath;
-        windowPathOrigin_ = Eigen::Vector2d(0,0);
+        windowPathOrigin_ = Eigen::Vector2d(x,y);
         windowPathLength_ = 99; // arbitrary length, since it is just a constant point
+
+        std::cout << "MPC static position enabled:" << std::endl;
+        std::cout << "   x = " << x << std::endl;
+        std::cout << "   y = " << y << std::endl;
 
         // Set path for full horizon
         for (unsigned int i = 0; i < (ACADO_N+1); i++) {
-            ACADO.od[i].cx0 = x;
-            ACADO.od[i].cx1 = 0;
+            ACADO.od[i].cx0 = 0;
+            ACADO.od[i].cx1 = 1000; // OBS. Even though we just want to hold the position, we still need to set a valid path due to the way the MPC tries to take the derivative
             ACADO.od[i].cx2 = 0;
             ACADO.od[i].cx3 = 0;
             ACADO.od[i].cx4 = 0;
@@ -269,7 +288,7 @@ namespace MPC {
             ACADO.od[i].cx8 = 0;
             ACADO.od[i].cx9 = 0;
 
-            ACADO.od[i].cy0 = y;
+            ACADO.od[i].cy0 = 0;
             ACADO.od[i].cy1 = 0;
             ACADO.od[i].cy2 = 0;
             ACADO.od[i].cy3 = 0;
@@ -285,12 +304,11 @@ namespace MPC {
         }
 
         // Reset horizon predictions for the movement on the path (s-value)
-        //real_t s_reset = ACADO.x[0].s;
-        real_t s_reset = ACADO.x[1].s; // resetting such that the value 1 step in the horizon becomes 0, since the states has not been shifted yet
         for (unsigned int i = 0; i < (ACADO_N+1); i++) {
-            ACADO.x[i].s = ACADO.x[i].s - s_reset;
+            ACADO.x[i].s = 0;
+            ACADO.x[i].x = 0;
+            ACADO.x[i].y = 0;
         }
-        // This results in ACADO.x[0].s = 0 and the path value predictions are then increasing from there
     }
 
     void MPC::setObstacles(std::vector<Obstacle>& obstacles)
@@ -528,7 +546,7 @@ namespace MPC {
         ACADO.x0.omega_ref_y = controlBodyAngularVelocity_[1];
     }
 
-    double MPC::getCurrentPathDistance() const
+    double MPC::getCurrentPathPosition() const
     {
         return ACADO.x0.s;
     }
@@ -612,9 +630,9 @@ namespace MPC {
     }
 
 
-    double MPC::getWindowAngularVelocityX(void) { return controlBodyAngularVelocity_[0]; }
-    double MPC::getWindowAngularVelocityY(void) { return controlBodyAngularVelocity_[1]; }
-    double MPC::getWindowAngularVelocityZ(void) { return controlBodyAngularVelocity_[2]; }
+    double MPC::getWindowAngularVelocityX(void) { return std::fmax(std::fmin(controlBodyAngularVelocity_[0], maxAngularVelocity_), -maxAngularVelocity_); }
+    double MPC::getWindowAngularVelocityY(void) { return std::fmax(std::fmin(controlBodyAngularVelocity_[1], maxAngularVelocity_), -maxAngularVelocity_); }
+    double MPC::getWindowAngularVelocityZ(void) { return std::fmax(std::fmin(controlBodyAngularVelocity_[2], maxAngularVelocity_), -maxAngularVelocity_); }
 
     Eigen::Vector2d MPC::getInertialAngularVelocity(void)
     {
@@ -626,6 +644,24 @@ namespace MPC {
         return I_omega_ref_2D;
     }
 
+    std::vector<std::pair<double,double>> MPC::getInertialAngularVelocityHorizon(void)
+    {
+        std::vector<std::pair<double,double>> angularVelocities;
+        Eigen::Matrix2d R_window = Eigen::Rotation2Dd(WindowOrientation_).toRotationMatrix().transpose();
+
+        for (unsigned int i = (ACADO_N+1); i >= 1; i--) {
+            Eigen::Vector2d H_omega_ref_2D(std::fmax(std::fmin(ACADO.x[i].omega_ref_x, maxAngularVelocity_), -maxAngularVelocity_),
+                                           std::fmax(std::fmin(ACADO.x[i].omega_ref_y, maxAngularVelocity_), -maxAngularVelocity_));
+            Eigen::Vector2d I_omega_ref_2D = R_window.transpose() * H_omega_ref_2D;
+
+            std::pair<double,double> angularVelocity;
+            angularVelocity.first = I_omega_ref_2D[0];
+            angularVelocity.second = I_omega_ref_2D[1];
+            angularVelocities.push_back(angularVelocity);
+        }
+
+        return angularVelocities;
+    }
 
     /*void MPC::EnableDebugOutput()
     {
@@ -692,12 +728,12 @@ namespace MPC {
         }
 
         /* calculate compute time */
-        float solve_time = static_cast<float>(acado_toc(&t));
+        SolveTime_ = static_cast<float>(acado_toc(&t));
 
-        std::cout << "Solve time: " << solve_time << std::endl;
+        std::cout << "Solve time: " << SolveTime_ << std::endl;
     }
 
-    void MPC::PlotPredictedTrajectory(cv::Mat& image)
+    void MPC::PlotPredictedTrajectory(cv::Mat& image, double x_min, double y_min, double x_max, double y_max)
     {
         Trajectory predictedTrajectory;
         for (unsigned int i = 0; i < (ACADO_N+1); i++) {
@@ -706,7 +742,7 @@ namespace MPC {
             predictedTrajectory.AddPoint(ACADO.x[i].x, ACADO.x[i].y, 0, velocity);
         }
         // Note that this predicted trajectory is in window frame
-        predictedTrajectory.plot(image, cv::Scalar(255, 0, 0), true, true);
+        predictedTrajectory.plot(image, cv::Scalar(255, 0, 0), true, true, x_min, y_min, x_max, y_max);
     }
 
     Trajectory MPC::getPredictedTrajectory(void)
@@ -757,9 +793,19 @@ namespace MPC {
         return state;
     }
 
+    double MPC::getHorizonPathLength() const
+    {
+        return ACADO.x[ACADO_N].s;
+    }
+
     MPC::status_t MPC::getStatus() const
     {
         return SolverStatus_;
+    }
+
+    double MPC::getSolveTime() const
+    {
+        return SolveTime_;
     }
 
     void MPC::PlotRobot(cv::Mat& image, cv::Scalar color, bool drawXup, double x_min, double y_min, double x_max, double y_max)

@@ -47,7 +47,7 @@ namespace MPC
             Polynomial();
             Polynomial(const Polynomial& poly);
             Polynomial(unsigned int order);
-            Polynomial(std::vector<double>& coeffs);
+            Polynomial(std::vector<double> coeffs);
             Polynomial(const double * coeffs, int num_coeffs);
             ~Polynomial();
 

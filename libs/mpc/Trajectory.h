@@ -101,6 +101,7 @@ namespace MPC
 			std::vector<double> GetX();
 			std::vector<double> GetY();
             TrajectoryPoint get(unsigned int index);
+            TrajectoryPoint back();
 
             void FixSequenceOrder(Trajectory& correctedTrajectory, int startSeqID, int endSeqID);
             void ExtractContinuousClosestSequence(Trajectory& continuousSequenceTrajectory, Eigen::Vector2d position = Eigen::Vector2d(0,0));
