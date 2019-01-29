@@ -39,8 +39,8 @@ namespace MPC {
 
     ACADO_t& MPC::ACADO = *((ACADO_t *)&acadoVariables);
 
-    const double MPC::WPathFollow = 100.0;
-    const double MPC::WVelocity = 2.0;
+    const double MPC::WPathFollow = 50.0;
+    const double MPC::WVelocity = 10.0;
     const double MPC::WSmoothness = 10.0;
 
     // Horizon weight matrix (cost)

@@ -283,7 +283,7 @@ int main(int argc, char** argv ) {
         std::cout << "   y = " << angularVelocityReference[1] << std::endl;
 
         cv::Mat imgPredicted = cv::Mat( 500, 500, CV_8UC3, cv::Scalar( 255, 255, 255 ) );
-        mpc.PlotPredictedTrajectory(imgPredicted);
+        mpc.PlotPredictedTrajectory(imgPredicted, -4, -4, 4, 4);
         mpc.PlotObstaclesInWindow(imgPredicted, cv::Scalar(255, 0, 0), true, -4, -4, 4, 4);
         mpc.PlotRobotInWindow(imgPredicted, cv::Scalar(255, 0, 0), true, -4, -4, 4, 4);
         cv::imshow("Predicted", imgPredicted);
