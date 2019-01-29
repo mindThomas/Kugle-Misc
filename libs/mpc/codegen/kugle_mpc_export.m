@@ -24,7 +24,7 @@ clear all;
     Control proximity_slack_variable;
     
     ts = 1/10;   
-    N = 30;      
+    N = 20;      
     
     %OnlineData represents data that can be passed to the solver online (real-time)
     OnlineData desiredVelocity;
