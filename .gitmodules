@@ -1,0 +1,2 @@
+[submodule "libs/lspc/LSPC"]
+	url = https://github.com/kdhansen/LSPC.git
