@@ -1,5 +1,5 @@
 # check the existance of Eigen, if not/outdated, install/reinstall
-find_package(Eigen3) # REQUIRED
+find_package(Eigen3)
 if (${EIGEN3_FOUND})
 	message(STATUS "Eigen3 found")
 else()

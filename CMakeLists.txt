@@ -58,7 +58,7 @@ mark_as_advanced(BOOST_THREAD_LIBRARY)
 
 find_package(OpenCV 3.3.1 REQUIRED core imgproc highgui) # contrib
 
-include_directories( ${OpenCV_INCLUDE_DIRS} )
+include_directories(... ${OpenCV_INCLUDE_DIRS})
 include_directories(... ${ACADO_INCLUDE_DIRS})
 include_directories(... ${Boost_INCLUDE_DIRS})
 link_directories(... ${Boost_LIBRARY_DIRS})

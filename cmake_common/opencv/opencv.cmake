@@ -1,5 +1,5 @@
 # check the existance of OpenCV, if not/outdated, install/reinstall
-find_package(OpenCV REQUIRED)
+find_package(OpenCV)
 if (${OpenCV_FOUND})
 	message(STATUS "OpenCV found")
 else()

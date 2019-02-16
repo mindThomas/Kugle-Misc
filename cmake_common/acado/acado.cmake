@@ -2,7 +2,7 @@
 list(APPEND CMAKE_MODULE_PATH "$ENV{ACADO_ENV_CMAKE_DIR}") # Ensure to source the 'acado_env.sh' script from the ACADO build folder if it is already installed elsewhere
 message("Current CMAKE_MODULE_PATH: ${CMAKE_MODULE_PATH}")
 #set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH}
-find_package(ACADO) # REQUIRED
+find_package(ACADO)
 if (${ACADO_FOUND})
 	message(STATUS "ACADO found")
 else()
