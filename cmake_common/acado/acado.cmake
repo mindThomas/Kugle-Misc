@@ -21,4 +21,4 @@ else()
 	endif()
 	
 endif()
-include_directories(${ACADO_INCLUDE_DIR})
+include_directories(${ACADO_INCLUDE_DIRS})

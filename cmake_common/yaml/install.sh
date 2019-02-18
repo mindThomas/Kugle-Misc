@@ -3,8 +3,8 @@
 set -e  # exit on error
 
 TMP_PATH=/tmp
-YAML_PATH=${TMP_PATH}/YAML
-YAML_BUILD_PATH=${PANGOLIN_PATH}/build
+YAML_PATH=${TMP_PATH}/yaml-cpp
+YAML_BUILD_PATH=${YAML_PATH}/build
 
 if [ ! -d ${YAML_PATH} ] ; then # Pangolin has not been downloaded does not exist
 	echo "Cloning yaml-cpp"

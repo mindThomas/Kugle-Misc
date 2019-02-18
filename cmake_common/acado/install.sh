@@ -24,7 +24,7 @@ cd ${ACADO_BUILD_PATH}
 cmake -DCMAKE_BUILD_TYPE="Release" ..
 make
 
-BUILD_PATH=${EASY_PROFILER_BUILD_PATH}/lib/libacado_toolkit_s.so
+BUILD_PATH=${ACADO_BUILD_PATH}/lib/libacado_toolkit_s.so
 
 if [ ! -f ${BUILD_PATH} ] ; then # build does not exist
 	echo "Unsucessfull ACADO build"
