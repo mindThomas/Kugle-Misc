@@ -1,6 +1,8 @@
 # Kugle-Misc
 Code, libraries and other tools built for the Kugle robot project but does not fit in the other repositories, eg. log-processing, periphiral drivers/interfaces, startup scripts etc.
 
+Most importantly this repository includes the real-time test code for the MPC library including obstacle avoidance.
+
 # How to build
 ```bash
 mkdir build
@@ -21,4 +23,10 @@ mkdir build
 cmake -DCMAKE_BUILD_TYPE="Release" ..
 echo 'source acado_env.sh' >> ~/.bashrc 
 source acado_env.sh
+```
+
+# MPC simulation
+This repository includes tests for the shape-accelerated model predictive controller including obstacle avoidance. The MPC can be simulated (faster than real-time) with a predefined trajectory and visualized with a 2D top-down view. Random obstacles will be generated during simulation. Run the simulation from the `build` folder after compiling.
+```bash
+./MPC_Test
 ```
