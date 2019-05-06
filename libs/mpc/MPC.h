@@ -87,8 +87,8 @@ class MPC
 	private:
 		static ACADO_t& ACADO;
 		static constexpr unsigned int num_StateVariables = ACADO_NX;	// 'xInit' needs to be a double vector of size [ACADO_NX x 1]
-		static constexpr unsigned int num_Inputs = ACADO_NU;		    // 'uInit' needs to be a double vector of size [ACADO_NU x 1]
-		static constexpr unsigned int num_Outputs = ACADO_NY;		    // 'Wmat' needs to be a double matrix of size [ACADO_NY x ACADO_NY]
+		static constexpr unsigned int num_Inputs = ACADO_NU;			// 'uInit' needs to be a double vector of size [ACADO_NU x 1]
+		static constexpr unsigned int num_Outputs = ACADO_NY;			// 'Wmat' needs to be a double matrix of size [ACADO_NY x ACADO_NY]
 		static constexpr unsigned int num_FinalOutputs = ACADO_NYN;		// 'WNmat' needs to be a double matrix of size [ACADO_NYN x ACADO_NYN]
 		static constexpr unsigned int num_OnlineData = ACADO_NOD;		// 'odInit' needs to be a double matrix of size [ACADO_N+1 x ACADO_NOD]
                                                                         // 'refInit' needs to be a double matrix of size [ACADO_N+1 x ACADO_NY]
@@ -103,14 +103,14 @@ class MPC
             double pathVelocity;
         } state_t;
 
-	    typedef enum orientation_selection_t : uint8_t
+		typedef enum orientation_selection_t : uint8_t
         {
-	        INERTIAL_FRAME = 0,
-	        HEADING_FRAME = 1,
-	        VELOCITY_FRAME = 2
+			INERTIAL_FRAME = 0,
+			HEADING_FRAME = 1,
+			VELOCITY_FRAME = 2
         } orientation_selection_t;
 
-	    typedef enum status_t
+		typedef enum status_t
         {
             SUCCESS = 0,
             ITERATION_LIMIT_REACHED = 1,

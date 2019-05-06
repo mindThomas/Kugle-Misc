@@ -41,7 +41,7 @@ namespace MPC
 
 	class TrajectoryPoint
 	{
-	    public:
+		public:
             int seq; // sequence number
             Eigen::Vector2d point;
             bool goal; // is this point the goal/final point - hence the robot should stop here
@@ -109,8 +109,8 @@ namespace MPC
             void plot(bool drawXup = false, bool plotText = true, double x_min = -4, double y_min = -4, double x_max = 4, double y_max = 4);
             void plot(cv::Mat& image, cv::Scalar color, bool drawXup = false, bool plotText = true, double x_min = -4, double y_min = -4, double x_max = 4, double y_max = 4);
 
-	    public:
-	        static Trajectory GenerateTestTrajectory(void);
+		public:
+			static Trajectory GenerateTestTrajectory(void);
 
 		private:
 			std::vector<TrajectoryPoint> points_;
