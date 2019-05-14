@@ -19,11 +19,14 @@ Alternatively it is recommended to download, compile and install ACADO manually 
 cd ~
 git clone https://github.com/acado/acado.git -b stable ACADOtoolkit
 cd ~/ACADOtoolkit
+git checkout b4e28f3131f79cadfd1a001e9fff061f361d3a0f
 mkdir build
 cmake -DCMAKE_BUILD_TYPE="Release" ..
 echo 'source acado_env.sh' >> ~/.bashrc 
 source acado_env.sh
 ```
+
+Note that a more recent branch from [November 2018](https://github.com/acado/acado/tree/b4e28f3131f79cadfd1a001e9fff061f361d3a0f) has been chosen and used for all tests. The `stable` branch is not compatible with the MATLAB interface due to a change in the MEX Code generation script related to the `info` return struct.
 
 ## MPC simulation
 This repository includes tests for the shape-accelerated model predictive controller including obstacle avoidance. The MPC can be simulated (faster than real-time) with a predefined trajectory and visualized with a 2D top-down view. Random obstacles will be generated during simulation. Run the simulation from the `build` folder after compiling.

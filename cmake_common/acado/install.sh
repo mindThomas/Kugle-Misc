@@ -11,6 +11,7 @@ if [ ! -d ${ACADO_PATH} ] ; then # ACADO has not been downloaded does not exist
 	cd ${TMP_PATH}
 	git clone https://github.com/acado/acado.git -b stable ACADOtoolkit
 	cd ${ACADO_PATH}
+	git checkout b4e28f3131f79cadfd1a001e9fff061f361d3a0f
 fi
 
 if [ ! -d ${ACADO_BUILD_PATH} ] ; then # build does not exist
