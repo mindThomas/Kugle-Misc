@@ -79,8 +79,16 @@ class MPC
 
 		// Weight definitions
         static const double WPathFollow;
+        static const double WLateral;
         static const double WVelocity;
+        static const double WProgress;
         static const double WSmoothness;
+        static const double WOmega;
+        static const double WAngle;
+        static const double WObstacles;
+        static const double ProximityOffset;
+        static const double ProximityScale;
+
         static const double Wdiag[ACADO_NY]; // Horizon weight matrix (cost)
         static const double WNdiag[ACADO_NYN]; // Final state weight matrix (cost)
 
@@ -130,16 +138,18 @@ class MPC
         void setXYreferencePosition(double x, double y);
         void setObstacles(std::vector<Obstacle>& obstacles);
 		void setVelocityBounds(double min_velocity, double max_velocity);
+        void setObstacleProximityParameters(double proximityOffset, double proximityScale);
 		void setDesiredVelocity(double velocity);
 
         double getWindowAngularVelocityX(void);
         double getWindowAngularVelocityY(void);
         double getWindowAngularVelocityZ(void);
         Eigen::Vector2d getInertialAngularVelocity(void);
+        Eigen::Vector3d getBodyAngularVelocity(double yawAngularVelocity);
         std::vector<std::pair<double,double>> getInertialAngularVelocityHorizon(void);
 
 		void setCurrentState(const Eigen::Vector2d& position, const Eigen::Vector2d& velocity, const boost::math::quaternion<double>& q);
-        void setControlLimits(double maxAngularVelocity, double maxAngle);
+        void setControlLimits(double maxAngle, double maxAngularVelocity, double maxAngularAcceleration);
         void setWeights(const Eigen::MatrixXd& W, const Eigen::MatrixXd& WN);
 
         void setTrajectory(Trajectory& trajectory, const Eigen::Vector2d& position, const Eigen::Vector2d& velocity, const boost::math::quaternion<double>& q);
@@ -148,7 +158,7 @@ class MPC
         void PlotPredictedTrajectory(cv::Mat& image, double x_min, double y_min, double x_max, double y_max);
         void PlotRobot(cv::Mat& image, cv::Scalar color, bool drawXup, double x_min, double y_min, double x_max, double y_max);
         void PlotRobotInWindow(cv::Mat& image, cv::Scalar color, bool drawXup, double x_min, double y_min, double x_max, double y_max);
-        void PlotObstacles(cv::Mat& image, cv::Scalar color, bool drawXup, double x_min, double y_min, double x_max, double y_max);
+        void PlotObstacles(cv::Mat& image, cv::Scalar obstacleColor, cv::Scalar consideredColor, bool drawXup, double x_min, double y_min, double x_max, double y_max);
         void PlotObstaclesInWindow(cv::Mat& image, cv::Scalar color, bool drawXup, double x_min, double y_min, double x_max, double y_max);
         Trajectory getPredictedTrajectory(void);
         state_t getHorizonState(unsigned int horizonIndex = 1);
@@ -174,14 +184,18 @@ class MPC
 	private:
         Trajectory currentTrajectory_;
         std::vector<Obstacle> currentObstacles_;
+        std::vector<Obstacle> consideredObstacles_;
 
         double desiredVelocity_;
         double minVelocity_;
         double maxVelocity_;
         double maxAngle_;
         double maxAngularVelocity_;
+        double maxAngularAcceleration_;
+        double proximityOffset_;
+        double proximityScale_;
 
-        Eigen::Vector3d controlBodyAngularVelocity_; // this is the computed output of the MPC
+        Eigen::Vector2d windowAngularVelocity_ref_; // this is the computed output of the MPC
 
         double WindowWidth_;
         double WindowHeight_;

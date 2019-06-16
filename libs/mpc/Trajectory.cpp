@@ -582,9 +582,9 @@ namespace MPC
             endIndex = points_.size()-1;
         }
 
+        continuousSequenceTrajectory.clear();
         if (endIndex < (points_.size()-1) || (endIndex == (points_.size()-1) && includesGoal())) {
             // Extract the continuous sequence trajectory
-            continuousSequenceTrajectory.clear();
             for (int i = startIndex; i <= endIndex; i++) {
                 continuousSequenceTrajectory.AddPoint(points_[i]);
             }
@@ -592,7 +592,6 @@ namespace MPC
         else { // endIndex equal to the last point but goal is not set, hence this is likely due to looping
             // Extract the continuous sequence trajectory from closest point to end item of trajectory
             endIndex = points_.size()-1;
-            continuousSequenceTrajectory.clear();
             for (int i = startIndex; i <= endIndex; i++) {
                 continuousSequenceTrajectory.AddPoint(points_[i]);
             }

@@ -68,21 +68,27 @@ int main(int argc, char** argv ) {
 
 #if 0
     MPC::Trajectory trajectory = MPC::Trajectory::GenerateTestTrajectory();
-    trajectory.plot(false, false, -6, -3, 6, 3);
+    cv::Mat imgTrajectory = cv::Mat( 500, 1333, CV_8UC3, cv::Scalar( 255, 255, 255 ) );
+    trajectory.plot(imgTrajectory, cv::Scalar(0, 0, 255), false, false, -8, -3, 8, 3);
+    cv::imshow("Trajectory", imgTrajectory);
 
     MPC::Trajectory window;
-    trajectory.WindowExtract(window, Eigen::Vector2d(4.8, -1), deg2rad(0), 2, 2);
-    window.plot(true, false, -1, -1, 1, 1);
+    cv::Mat imgWindowTrajectory = cv::Mat( 500, 500, CV_8UC3, cv::Scalar( 255, 255, 255 ) );
+    trajectory.WindowExtract(window, Eigen::Vector2d(4.8, -1), deg2rad(0), 3, 3);
+    window.plot(imgWindowTrajectory, cv::Scalar(0, 255, 0), true, false);
+    cv::imshow("Window", imgWindowTrajectory);
 
-    tic();
     MPC::Path path(window);
-    toc();
+    cv::Mat imgWindowPath = cv::Mat( 500, 500, CV_8UC3, cv::Scalar( 255, 255, 255 ) );
     path.print();
-    path.plot(true, -1, -1, 1, 1);
+    path.plot(imgWindowPath, cv::Scalar(0, 255, 0), true);
+    cv::imshow("Path", imgWindowPath);
 
     cv::waitKey(0);
     return 0;
+#endif
 
+#if 0
     MPC::Trajectory t;
     t.AddPoint((unsigned int)2, 2.0f, 2.0f);
     t.AddPoint((unsigned int)1, 2.0f, -2.0f);
@@ -186,7 +192,8 @@ int main(int argc, char** argv ) {
 
     return 0;
 #endif
-    
+
+#if 1
     MPC::MPC mpc;
     MPC::Trajectory trajectory = MPC::Trajectory::GenerateTestTrajectory();
 
@@ -238,25 +245,27 @@ int main(int argc, char** argv ) {
         if ((i % 10) == 0) {
             mpc.setTrajectory(trajectory, state.position, state.velocity, state.quaternion);
             mpc.setObstacles(obstacles);
+            //mpc.setObstacles(obstacles);
         }
+        //mpc.setTrajectory(trajectory, state.position, state.velocity, state.quaternion);
 
         mpc.setCurrentState(state.position, state.velocity, state.quaternion);
 
         cv::Mat imgTrajectory = cv::Mat( 500, 1333, CV_8UC3, cv::Scalar( 255, 255, 255 ) );
         trajectory.plot(imgTrajectory, cv::Scalar(0, 0, 255), false, false, -8, -3, 8, 3);
         mpc.PlotRobot(imgTrajectory, cv::Scalar(255, 0, 0), false, -8, -3, 8, 3);
-        mpc.PlotObstacles(imgTrajectory, cv::Scalar(255, 0, 0), false, -8, -3, 8, 3);
+        mpc.PlotObstacles(imgTrajectory, cv::Scalar(255, 0, 0), cv::Scalar(0, 255, 0), false, -8, -3, 8, 3);
         cv::imshow("Trajectory", imgTrajectory);
 
         cv::Mat imgWindowTrajectory = cv::Mat( 500, 500, CV_8UC3, cv::Scalar( 255, 255, 255 ) );
-        mpc.getCurrentTrajectory().plot(imgWindowTrajectory, cv::Scalar(0, 255, 0), true, false);
+        mpc.getCurrentTrajectory().plot(imgWindowTrajectory, cv::Scalar(0, 255, 0), true, false, -4, -4, 4, 4);
         mpc.PlotRobotInWindow(imgWindowTrajectory, cv::Scalar(255, 0, 0), true, -4, -4, 4, 4);
         mpc.PlotObstaclesInWindow(imgWindowTrajectory, cv::Scalar(255, 0, 0), true, -4, -4, 4, 4);
         cv::imshow("Window", imgWindowTrajectory);
 
         cv::Mat imgWindowPath = cv::Mat( 500, 500, CV_8UC3, cv::Scalar( 255, 255, 255 ) );
-        mpc.getCurrentPath().plot(imgWindowPath, cv::Scalar(0, 255, 0), true);
-        mpc.getCurrentPath().PlotPoint(mpc.getClosestPointOnPath(), imgWindowPath, cv::Scalar(0, 0, 255), true);
+        mpc.getCurrentPath().plot(imgWindowPath, cv::Scalar(0, 255, 0), true, -4, -4, 4, 4);
+        mpc.getCurrentPath().PlotPoint(mpc.getClosestPointOnPath(), imgWindowPath, cv::Scalar(0, 0, 255), true, -4, -4, 4, 4);
         mpc.PlotRobotInWindow(imgWindowPath, cv::Scalar(255, 0, 0), true, -4, -4, 4, 4);
         mpc.PlotObstaclesInWindow(imgWindowPath, cv::Scalar(255, 0, 0), true, -4, -4, 4, 4);
         cv::imshow("Path", imgWindowPath);
@@ -266,6 +275,7 @@ int main(int argc, char** argv ) {
         Eigen::Vector2d angularVelocityReference(0.0, 0.0);
         if (mpc.getStatus() != MPC::MPC::SUCCESS) {
             std::cout << "MPC Solver failed" << std::endl;
+            cv::waitKey(0);
         }
 
         state = mpc.getHorizonState();
@@ -289,6 +299,8 @@ int main(int argc, char** argv ) {
 
         cv::waitKey(1);
     }
+
+#endif
 
     return 0;
 }
