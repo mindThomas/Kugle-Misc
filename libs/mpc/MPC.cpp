@@ -246,6 +246,7 @@ namespace MPC {
 
             ACADO.od[i].trajectoryLength = windowPathLength_;
             ACADO.od[i].trajectoryStart = closestPositionOnCurrentPathToOrigin_;
+            ACADO.od[i].desiredVelocity = desiredVelocity_;
         }
 
         // Reset horizon predictions for the movement on the path (s-value)
@@ -286,7 +287,7 @@ namespace MPC {
         // Set path for full horizon
         for (unsigned int i = 0; i < (ACADO_N+1); i++) {
             ACADO.od[i].cx0 = 0;
-            ACADO.od[i].cx1 = 1000; // OBS. Even though we just want to hold the position, we still need to set a valid path due to the way the MPC tries to take the derivative
+            ACADO.od[i].cx1 = 0.0001; // OBS. Even though we just want to hold the position, we still need to set a valid path due to the way the MPC tries to take the derivative
             ACADO.od[i].cx2 = 0;
             ACADO.od[i].cx3 = 0;
             ACADO.od[i].cx4 = 0;
@@ -309,6 +310,7 @@ namespace MPC {
 
             ACADO.od[i].trajectoryLength = windowPathLength_;
             ACADO.od[i].trajectoryStart = 0;
+            ACADO.od[i].desiredVelocity = 0;
         }
 
         // Reset horizon predictions for the movement on the path (s-value)
@@ -761,14 +763,12 @@ namespace MPC {
         //for ( int i = 0; i < ACADO_NU; i++ ) out_u0[i] = acadoVariables.u[i];
 
         /*windowAngularVelocity_ref_[0] = ACADO.u[0].omega_ref_x;
-        windowAngularVelocity_ref_[1] = ACADO.u[0].omega_ref_y;
-        windowAngularVelocity_ref_[2] = 0;*/
+        windowAngularVelocity_ref_[1] = ACADO.u[0].omega_ref_y;*/
 
         /* The MPC is controlling the angular acceleration, thus the current angular velocity output is taken as the state one step ahead
          * (gives the same as integrating the current domega_ref_x and domega_ref_y output from the MPC) */
         windowAngularVelocity_ref_[0] = ACADO.x[1].omega_ref_x;
         windowAngularVelocity_ref_[1] = ACADO.x[1].omega_ref_y;
-        windowAngularVelocity_ref_[2] = 0;
 
         if ((ACADO.x[ACADO_N].s + closestPositionOnCurrentPathToOrigin_) > windowPathLength_) {
             std::cout << "[WARN] MPC horizon is running outside of input path - Path length=" << windowPathLength_ << " vs s[N]=" << (ACADO.x[ACADO_N].s + closestPositionOnCurrentPathToOrigin_) << std::endl;

@@ -110,7 +110,8 @@ namespace MPC
             void plot(cv::Mat& image, cv::Scalar color, bool drawXup = false, bool plotText = true, double x_min = -4, double y_min = -4, double x_max = 4, double y_max = 4);
 
 		public:
-			static Trajectory GenerateTestTrajectory(void);
+			static Trajectory GenerateOvalTrajectory(Eigen::Vector2d offset = Eigen::Vector2d(0,0));
+            static Trajectory GenerateCircleTrajectory(Eigen::Vector2d offset = Eigen::Vector2d(0,0));
 
 		private:
 			std::vector<TrajectoryPoint> points_;

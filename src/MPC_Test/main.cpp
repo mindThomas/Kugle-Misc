@@ -195,7 +195,8 @@ int main(int argc, char** argv ) {
 
 #if 1
     MPC::MPC mpc;
-    MPC::Trajectory trajectory = MPC::Trajectory::GenerateTestTrajectory();
+    mpc.setDesiredVelocity(1.0);
+    MPC::Trajectory trajectory = MPC::Trajectory::GenerateOvalTrajectory();
 
     // Random obstacle generation
     std::default_random_engine generator;
@@ -217,8 +218,9 @@ int main(int argc, char** argv ) {
     Eigen::Vector2d RobotPos(4.5, -0.8);
     double RobotYaw = deg2rad(90);
     auto RobotQuaternion = Quaternion_eul2quat_zyx(RobotYaw, 0, 0);
-    mpc.setTrajectory(trajectory, RobotPos, Eigen::Vector2d(0.01,0), RobotQuaternion);
-    mpc.setCurrentState(RobotPos, Eigen::Vector2d(0.01,0), RobotQuaternion);
+    mpc.setTrajectory(trajectory, RobotPos, Eigen::Vector2d(0.001,0), RobotQuaternion);
+    //mpc.setXYreferencePosition(RobotPos(0), RobotPos(1));
+    mpc.setCurrentState(RobotPos, Eigen::Vector2d(0.001,0), RobotQuaternion);
     mpc.setObstacles(obstacles);
 
     MPC::MPC::state_t state;
@@ -228,6 +230,9 @@ int main(int argc, char** argv ) {
     int i = 0;
     while (!shouldExit) {
         i++;
+
+	std::cout << std::endl << "======================================" << std::endl;
+	std::cout << "Current velocity = " << sqrt(state.velocity[0]*state.velocity[0] + state.velocity[1]*state.velocity[1]) << " m/s" << std::endl << std::endl;
 
         if ((i % 500) == 0) {
             obstacles.clear();
@@ -245,9 +250,7 @@ int main(int argc, char** argv ) {
         if ((i % 10) == 0) {
             mpc.setTrajectory(trajectory, state.position, state.velocity, state.quaternion);
             mpc.setObstacles(obstacles);
-            //mpc.setObstacles(obstacles);
         }
-        //mpc.setTrajectory(trajectory, state.position, state.velocity, state.quaternion);
 
         mpc.setCurrentState(state.position, state.velocity, state.quaternion);
 
